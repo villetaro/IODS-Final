@@ -144,12 +144,14 @@ $(document).ready(function () {
 <li><a href="#introduction-and-a-brief-look-at-my-data">Introduction and a brief look at my data</a></li>
 <li><a href="#graphical-overview">Graphical overview</a></li>
 <li><a href="#my-hypothesis">My hypothesis</a></li>
+<li><a href="#the-logistic-regression-model">The logistic regression model</a></li>
+<li><a href="#results">Results</a></li>
 </ul>
 </div>
 
 <div id="introduction-and-a-brief-look-at-my-data" class="section level1">
 <h1>Introduction and a brief look at my data</h1>
-<p>I am using the STUDENT ALCOHOL CONSUMPTION Data Set from “<a href="https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION" class="uri">https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION</a>”. Here are the variables that I chose and also an explanation how to measure the variable.</p>
+<p>I am using a dataset from <a href="https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION">UCI Machine Learning Repository</a>. The dataset used in my analysis has combined information about the alcohol consumption of students of both maths and Portugese. Here are the variables that I chose and also an explanation how to measure the variable.</p>
 <table style="width:72%;">
 <colgroup>
 <col width="13%"></col>
@@ -180,11 +182,11 @@ $(document).ready(function () {
 </tr>
 <tr class="odd">
 <td>alc_use</td>
-<td>alcohol consumption (numeric: from 1 - very low to 5 - very high)</td>
+<td>alcohol consumption, average from weekdays and weekends (numeric: from 1 - very low to 5 - very high)</td>
 </tr>
 <tr class="even">
 <td>high_use</td>
-<td>TRUE for students for which ‘alc_use’ is greater than 2 (and FALSE otherwise).</td>
+<td>TRUE for students for which ‘alc_use’ is greater than 2 (and FALSE otherwise)</td>
 </tr>
 <tr class="odd">
 <td>health</td>
@@ -208,9 +210,9 @@ $(document).ready(function () {
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>alcdata &lt;- read.table(&quot;~/GitHub/IODS-Final/alcdata&quot;, header=T, sep=&quot;,&quot;)
+<pre class="r"><code>alc &lt;- read.table(&quot;~/GitHub/IODS-Final/alcdata&quot;, header=T, sep=&quot;,&quot;)
 
-alcdata_ &lt;- dplyr::select(alcdata, -X)
+alcdata_ &lt;- select(alc, -X)
 
 dim(alcdata_)</code></pre>
 <pre><code>## [1] 382  11</code></pre>
@@ -242,6 +244,12 @@ multiplot(g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, cols=4)</code></pre>
 </div>
 <div id="my-hypothesis" class="section level1">
 <h1>My hypothesis</h1>
+</div>
+<div id="the-logistic-regression-model" class="section level1">
+<h1>The logistic regression model</h1>
+</div>
+<div id="results" class="section level1">
+<h1>Results</h1>
 </div>
 
 
