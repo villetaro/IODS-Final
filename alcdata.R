@@ -12,7 +12,7 @@ colnames(alc)
 ## The data has 382 observations and 35 different variables. I decided to only keep the 
 ## variables that I find interesting.
 
-keep <- c("school", "sex", "age", "goout", "health", "absences", "G1", "G2", "G3", "alc_use", "high_use")
+keep <- c("G1", "G2", "G3")
 
 alcdata <- dplyr::select(alc, one_of(keep))
 
@@ -23,4 +23,4 @@ summary (alcdata)
 ## and move on to the next part.
 
 
-write.csv(alcdata, file="alcdata", row.names = T)
+write.csv(alcdata, file="alcdata1", row.names = T)
