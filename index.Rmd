@@ -23,7 +23,7 @@ library(plotly)
 library(dplyr)
 library(FactoMineR)
 require(ggplot2)
-
+library(corrplot)
 ```
 
 # Introduction and a brief look at my data
@@ -113,6 +113,18 @@ multiplot(g1, g2, g3, cols=3)
 ```
 
 
+```{r}
+cor_matrix<-cor(alcdata_) 
+
+
+
+cor_matrix %>% round(digits = 2)
+wb <- c("white","black") 
+
+corrplot(cor_matrix, order="hclust", addrect=2, bg="gold2", col=wb)
+```
+
+
 
 ```{r}
 summary(alcdata_)
@@ -122,12 +134,256 @@ summary(alcdata_)
 
 # My hypothesis
 
+As my major is Economics I try to make a model that is familiar in stock markets. In the model the best guess for the next value is its' current value. In this particular case the current values are G1 and G2 and the next value is the Final grade G3. That means that I am explaining the final score (G3) with the first two grades (G1 + G2). After that I'm clustering and looking at the results of the cluster.
+
 # The clustering model
 
+
+Scaling the data.
+
+```{r}
+alcdata_scaled <- scale(alcdata_)
+summary(alcdata_scaled)
+
+```
+
+
+```{r}
+alcdata_scaled <- as.data.frame(alcdata_scaled)
+```
+
+#G1 
+
+```{r}
+cutoffs <- quantile(alcdata_scaled$G1)
+
+labels <- c("low", "med_low", "med_high", "high")
+
+G1_category <- cut(alcdata_scaled$G1, breaks = cutoffs, include.lowest = TRUE, label = labels)
+
+table(G1_category)
+```
+
+#G2
+
+```{r}
+cutoffs <- quantile(alcdata_scaled$G2)
+
+labels <- c("low", "med_low", "med_high", "high")
+
+G2_category <- cut(alcdata_scaled$G2, breaks = cutoffs, include.lowest = TRUE, label = labels)
+
+table(G2_category)
+```
+
+#G3
+
+```{r}
+cutoffs <- quantile(alcdata_scaled$G3)
+
+labels <- c("low", "med_low", "med_high", "high")
+
+G3_category <- cut(alcdata_scaled$G3, breaks = cutoffs, include.lowest = TRUE, label = labels)
+
+table(G3_category)
+```
+
+Now we drop the old G3 variable from the dataset. Then we divide the dataset to train and test sets, so that 80% of the data belongs to the train set.
+
+
+```{r}
+alcdata_scaled <- dplyr::select(alcdata_scaled, -G3)
+alcdata_scaled <- data.frame(alcdata_scaled, G3_category)
+str(alcdata_scaled)
+
+```
+
+```{r}
+n <- nrow(alcdata_scaled)
+eighty_perc <- sample(n, size = n * 0.8)
+train <- alcdata_scaled[eighty_perc,]
+test <- alcdata_scaled[-eighty_perc,]
+
+```
+
+Now we fit the linear discriminant analysis on the train set. We use the categorical G3 as the target variable and all the other variables (G1 and G2) in the dataset as predictor variables. This gives us an idea how G3 also known as the final grade interacts with the other variables.
+
+```{r}
+lda.fit <- lda(G3_category ~ ., data = train)
+lda.fit
+
+```
+
 # Results
+Now we draw the LDA biplot
+
+```{r}
+lda.arrows <- function(x, myscale = 0.5, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+classes <- as.numeric(train$G3_category)
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 2)
 
 
 
+```
 
 
+Now we predict the classes with the LDA model on the test data. We can help our analysis by cross tabulating the results with the G3 categories from the test set.
 
+```{r}
+
+correct_classes <- test$G3_category
+test <- dplyr::select(test, -G3_category)
+
+```
+I see that all of the groups are pretty well predicted as most of the observations are the same in correct and predicted.
+
+```{r}
+
+lda.pred <- predict(lda.fit, newdata = test)
+table(correct = correct_classes, predicted = lda.pred$class)
+
+```
+Let's see how well the model actually worked. I made a little observation during this analysis that the model changes everytime when I ran the code as some of the numbers come from random variables. As you read this the number may look a little different but I try to get the overall look.
+
+The number of total observations
+```{r}
+
+total <- c(10+4+22+1+2+15+2+4+17)
+total
+
+```
+
+We have 77 observations.
+
+The number of correct predictions in this instance.
+```{r}
+
+
+correct <- c(10+22+15+17)
+correct
+
+```
+
+We had 64 correctly predicted observations.
+
+```{r}
+
+wrong <- c(77-64)
+wrong
+
+```
+And 13 of the observations were incorrectly predicted.
+
+The accuracy of our model is the following:
+
+```{r}
+ratio <- c(correct/total)
+ratio
+
+```
+At this time the model did ok but as I ran the code a couple of times the accuracy was quite different (0.83 as I write this). If I would get everytime 83% accuracy the model would actually be pretty good.
+
+#Distances
+
+
+Now we reload the alc dataset and standardize it. Then we take a look at the distances between the variables.
+
+
+```{r}
+New_alc <- alcdata_
+
+str(New_alc)
+
+New_alc_scaled <- scale(New_alc) %>% as.data.frame()
+
+str(New_alc_scaled)
+```
+Now we calculate the distances.
+
+```{r}
+# Euclidean distance matrix using set.seed()
+set.seed(123)
+dist_eu <- dist(New_alc_scaled)
+summary(dist_eu)
+
+
+```
+This is based on the Euclidean measure. And above you see the summary of the findings. Now we can start the clustering with the amount of 10 clusters. 10 is a safe bet that nothing would go wrong, below I calculate the optimum amount of clusters.
+
+```{r}
+
+km <-kmeans(dist_eu, centers=10)
+pairs(New_alc_scaled, col = km$cluster)
+
+```
+
+As there is 10 clusters at the moment it is really hard to see what actually happens in this plot. 
+
+Because of this we want to optimize the amount of clusters so we don't have to guess it and then we can take a look at the plot again.
+
+#The optimal amount of clusters
+
+
+```{r}
+k_max <- 10
+wss <- sapply(1:k_max, function(k){kmeans(dist_eu, k)$tot.withinss})
+plot(1:k_max, wss, type="b", xlab="Number of Clusters",
+  ylab="Within groups sum of squares")
+
+```
+
+
+It seems that the optimal amount of clusters is 2. So we run the cluster analysis again and then take a look at the plot.
+
+
+```{r}
+km <-kmeans(dist_eu, centers=2)
+pairs(New_alc_scaled, col = km$cluster)
+
+```
+
+Next we perform LDA using the clusters as target classes. We include all the variables in the Boston data in the LDA model.
+
+```{r}
+
+km <-kmeans(dist_eu, centers = 3)
+lda.fits <- lda(km$cluster~., data = alcdata_scaled)
+lda.fits
+
+```
+
+```{r}
+
+plot(lda.fits, dimen = 2, col = classes) 
+lda.arrows(lda.fits, myscale = 1)
+
+```
+Using 3 clusters for K-means analysis, the most influencial linear separators are of course G1 and G2 as they are our only variables. G1 especially holds a strong predicting power. This gives us an idea that they would be the best variables to predict new observations if those would appear.
+
+The last thing to do is 3d modeling to make the results easier to read.
+
+```{r}
+model_predictors <- dplyr::select(train, -G3_category)
+
+
+dim(model_predictors)
+dim(lda.fit$scaling)
+
+matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
+matrix_product <- as.data.frame(matrix_product)
+
+
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = 0, type= 'scatter3d', mode='markers', color = classes, 
+        colors=c("blue","yellow") )
+
+```
+
+#Final words
