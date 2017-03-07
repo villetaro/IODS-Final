@@ -26,9 +26,12 @@ require(ggplot2)
 library(corrplot)
 ```
 
+# Abstract 
+Analysing the grades in Student Alcohol Consumptions dataset with the idea that the final grade G3 could be explained with the first two grades G1 and G2 using clustering.
+
 # Introduction and a brief look at my data
 
-I am using a dataset from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION). The dataset used in my analysis has combined information about the alcohol consumption of students of both maths and Portugese. Here are the variables that I chose and also an explanation how to measure the variable.
+I am using a dataset from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION). The dataset used in my analysis has combined information about the alcohol consumption of students of both maths and Portugese. This time I decided to take only the grades that the studetns got from the exams as I had last time analysed the alcohol consumption. Below are the variables and also explanation of the variable and how it was measured.
 
 Variable | Description of variable and how it was measured
 --------- | -----------------------------------------
@@ -36,6 +39,11 @@ G1 | first period grade (numeric: from 0 to 20)
 G2 | second period grade (numeric: from 0 to 20) 
 G3 | final grade (numeric: from 0 to 20) 
 
+
+Link to my [Data Wrangling](https://github.com/villetaro/IODS-Final/blob/master/alcdata.R)
+
+
+After this we load the data.
 
 ```{r}
 alc <- read.table("~/GitHub/IODS-Final/alcdata1", header=T, sep=",")
@@ -49,9 +57,13 @@ colnames(alcdata_)
 ```
 
 
+```{r}
+summary(alcdata_)
+
+```
+
 # Graphical overview
 
-These are the variables that I decided to keep. Next I drew a multiplot of them where we can see better how they look.
 
 ```{r, include= FALSE}
 # Multiple plot function
@@ -112,6 +124,17 @@ g3 <- ggplot(alcdata_, aes(G3)) + geom_bar()+ theme_grey() + theme(axis.text.x =
 multiplot(g1, g2, g3, cols=3)
 ```
 
+This is a multiplot of the variables. The most interesting part is that the amount of grade = 0 goes up a lot when looking at the changes from G1 to G2 and G3. Otherwise the graphs look a lot like each other and the means are the following:
+
+Variable | Mean
+--------- | -----------------------------------------
+G1 | 10.86
+G2 | 10.71
+G3 | 10.39
+
+It shows how the mean goes down just a little bit when looking at the change from G1 to G2 to G3.
+
+Next I drew a correlation matrix that shows the relationship between the three variables. They all are highly correlated with each other because they are measured the same way and the grades don't actually change that much during the analysis.
 
 ```{r}
 cor_matrix<-cor(alcdata_) 
@@ -125,21 +148,48 @@ corrplot(cor_matrix, order="hclust", addrect=2, bg="gold2", col=wb)
 ```
 
 
-
-```{r}
-summary(alcdata_)
-
-```
-
-
 # My hypothesis
 
-As my major is Economics I try to make a model that is familiar in stock markets. In the model the best guess for the next value is its' current value. In this particular case the current values are G1 and G2 and the next value is the Final grade G3. That means that I am explaining the final score (G3) with the first two grades (G1 + G2). After that I'm clustering and looking at the results of the cluster.
+As my major is Economics I try to make a model that is used in the stock and bond markets. In the model the best guess for the next value is its' current value. In this particular case the current values are G1 and G2 and the next value is the Final grade G3. That means that I am explaining the final score (G3) with the first two grades (G1 + G2). After that I'm clustering and looking at the results of the cluster.
+
+# The regression model
+
+The only reason that I wanted to show this regression model is that it gives a clear view of the data and also an idea how the high correlation might affect the analysis in the future. 
+
+
+```{r, message=FALSE}
+p2 <- ggplot(alcdata_, aes(x=G1, y= G3)) + geom_point(col="deepskyblue1") + geom_smooth( col = "red2")
+
+p2
+```
+
+The plot already shows how much the zero values affect the regression. I thought about taking the away but then the results would've been biased upwards.
+
+```{r}
+
+model5 <- lm(G1 ~ G3, alcdata_)
+summary(model5)
+plot(model5,  which=c(1), col = "turquoise2",  lwd = 3)
+```
+
+```{r, message=FALSE}
+p3 <- ggplot(alcdata_, aes(x=G2, y= G3)) + geom_point(col="red2") + geom_smooth(col = "royalblue1")
+
+p3
+```
+
+The same thing happens here that also happened in the first regression model: the zero values affect a lot. These pictures also show well how correlated the variables are. This might be a trouble in the future but we there isn't much to do a this point. After all the results are done then we can figure out if the model would be better with other variables that might have	explanation power.
+
+```{r}
+model6 <- lm(G2 ~ G3, alcdata_)
+summary(model6)
+plot(model6,  which=c(1), col = "turquoise2",  lwd = 3)
+```
 
 # The clustering model
 
 
-Scaling the data.
+First we scale the data so that all the means are zero.
 
 ```{r}
 alcdata_scaled <- scale(alcdata_)
@@ -152,6 +202,7 @@ summary(alcdata_scaled)
 alcdata_scaled <- as.data.frame(alcdata_scaled)
 ```
 
+Then we make 4 groups for the variables. The groups are the following: low, med_low, med_high and high.
 #G1 
 
 ```{r}
@@ -243,7 +294,7 @@ correct_classes <- test$G3_category
 test <- dplyr::select(test, -G3_category)
 
 ```
-I see that all of the groups are pretty well predicted as most of the observations are the same in correct and predicted.
+I see that all of the groups are pretty well predicted as most of the observations are the same in correct and predicted. This reason might be the same thing that I said above: the variables are highly correlated with each other.
 
 ```{r}
 
@@ -293,7 +344,6 @@ At this time the model did ok but as I ran the code a couple of times the accura
 
 #Distances
 
-
 Now we reload the alc dataset and standardize it. Then we take a look at the distances between the variables.
 
 
@@ -325,9 +375,9 @@ pairs(New_alc_scaled, col = km$cluster)
 
 ```
 
-As there is 10 clusters at the moment it is really hard to see what actually happens in this plot. 
+As there is 10 clusters at the moment it is really hard to see what actually happens in this plot. The reason is because I have 10 clusters but only 2 variables. Let's find out if the amount of variables is also a good amount of clusters.
 
-Because of this we want to optimize the amount of clusters so we don't have to guess it and then we can take a look at the plot again.
+Because of the picture being so hard to interpret we want to optimize the amount of clusters so we don't have to guess it and then we can take a look at the plot again.
 
 #The optimal amount of clusters
 
@@ -350,7 +400,7 @@ pairs(New_alc_scaled, col = km$cluster)
 
 ```
 
-Next we perform LDA using the clusters as target classes. We include all the variables in the Boston data in the LDA model.
+Next we perform LDA using the clusters as target classes. We include all the grades in the alc data in the LDA model.
 
 ```{r}
 
@@ -368,7 +418,7 @@ lda.arrows(lda.fits, myscale = 1)
 ```
 Using 3 clusters for K-means analysis, the most influencial linear separators are of course G1 and G2 as they are our only variables. G1 especially holds a strong predicting power. This gives us an idea that they would be the best variables to predict new observations if those would appear.
 
-The last thing to do is 3d modeling to make the results easier to read.
+The last thing to do is 3d modeling to make the results easier to read. As I only have two variables I left the Z = 0. This might affect the 3d plot making it appear a little bit biased.
 
 ```{r}
 model_predictors <- dplyr::select(train, -G3_category)
