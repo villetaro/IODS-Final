@@ -206,7 +206,7 @@ summary(alcdata_scaled)
 alcdata_scaled <- as.data.frame(alcdata_scaled)
 ```
 
-Then we make 4 groups for the variables. The groups are the following: low, med_low, med_high and high.
+Then we make 4 groups for the variables. The groups are the following: low, med_low, med_high and high. This is because in clustering the point is to group different observations.
 
 # G1 
 
