@@ -422,6 +422,7 @@ plot(lda.fits, dimen = 2, col = classes)
 lda.arrows(lda.fits, myscale = 1)
 
 ```
+
 Using 3 clusters for K-means analysis, the most influencial linear separators are of course G1 and G2 as they are our only variables. G1 especially holds a strong predicting power. This gives us an idea that they would be the best variables to predict new observations if those would appear.
 
 There is quite a large group of number 3 in the top right corner even though the arrows point in the opposite direction.
