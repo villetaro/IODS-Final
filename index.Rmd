@@ -8,8 +8,8 @@ output:
     toc: true
     toc_depth: 2
     fig_caption: true
-    fig_width: 10
-    fig_height: 10
+    fig_width: 9
+    fig_height: 9
     code_folding: hide
 ---
 
@@ -188,6 +188,10 @@ plot(model6,  which=c(1), col = "turquoise2",  lwd = 3)
 
 # The clustering model
 
+In clustering the idea is that some of the observations are closer to each other compared to the others. This means that the data is in a way clustered and the idea is to try to find these clusters. 
+
+It is quite simple to find clusters but I want to optimize the amount of clusters which I do below after first clustering with 10 clusters. After this we try to analyse what happens when there is new observations. Could we classify them also?
+
 
 First we scale the data so that all the means are zero.
 
@@ -203,7 +207,8 @@ alcdata_scaled <- as.data.frame(alcdata_scaled)
 ```
 
 Then we make 4 groups for the variables. The groups are the following: low, med_low, med_high and high.
-#G1 
+
+# G1 
 
 ```{r}
 cutoffs <- quantile(alcdata_scaled$G1)
@@ -285,6 +290,7 @@ lda.arrows(lda.fit, myscale = 2)
 
 ```
 
+The biggest observation is that those "low" values are quite far away from the others. After that we see how G1 and G2 arrows represent the direction and volume of the predictive grade variables.
 
 Now we predict the classes with the LDA model on the test data. We can help our analysis by cross tabulating the results with the G3 categories from the test set.
 
@@ -418,22 +424,11 @@ lda.arrows(lda.fits, myscale = 1)
 ```
 Using 3 clusters for K-means analysis, the most influencial linear separators are of course G1 and G2 as they are our only variables. G1 especially holds a strong predicting power. This gives us an idea that they would be the best variables to predict new observations if those would appear.
 
-The last thing to do is 3d modeling to make the results easier to read. As I only have two variables I left the Z = 0. This might affect the 3d plot making it appear a little bit biased.
-
-```{r}
-model_predictors <- dplyr::select(train, -G3_category)
-
-
-dim(model_predictors)
-dim(lda.fit$scaling)
-
-matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
-matrix_product <- as.data.frame(matrix_product)
-
-
-plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = 0, type= 'scatter3d', mode='markers', color = classes, 
-        colors=c("blue","yellow") )
-
-```
+There is quite a large group of number 3 in the top right corner even though the arrows point in the opposite direction.
 
 #Final words
+
+The biggest concern that I have after this analysis is that there is omitted variable bias as I only have the first two grades explaining the final grade. This is not a huge issue in clustering as in clustering the objective is to to group the observations in a way that makes them more similar to each other. On the other hand if this was a real regression model then this would be a lot more problematic.
+
+The omitted variable bias could be fixed with new variables or control variables. They could be for example the wealth of the family or how much alcohol the student consumes.
+
